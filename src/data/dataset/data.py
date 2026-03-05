@@ -4,6 +4,7 @@ import torch.utils.data
 
 data_load_name="dataset"
 
+#return synthetic data obj
 def load_data(conf : config.Config) -> torch.utils.data.Dataset:
     """Simple function to load a dataset based on the provided config object.
     """
