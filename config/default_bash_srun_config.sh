@@ -18,6 +18,7 @@ export COMP597_SLURM_CPUS_PER_TASK=2
 export COMP597_SLURM_MIN_MEM="1GB"
 export COMP597_SLURM_NUM_GPUS=0
 export COMP597_SLURM_JOB_SCRIPT=${scripts_dir}/bash_job.sh
+export COMP597_SLURM_NODELIST="gpu-grad-01"
 
 unset scripts_dir
 unset config_dir
