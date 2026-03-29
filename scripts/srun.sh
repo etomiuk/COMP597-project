@@ -30,6 +30,7 @@ fi
 # Launch the job
 
 srun \
+	--unbuffered \
 	--partition=${COMP597_SLURM_PARTITION} \
 	--mem=${COMP597_SLURM_MIN_MEM} \
 	--time=${COMP597_SLURM_TIME_LIMIT} \

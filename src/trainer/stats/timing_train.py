@@ -1,56 +1,82 @@
-from abc import ABC, abstractmethod
+import src.config as config
+import src.trainer.stats.base as base
+import src.trainer.stats.utils as utils
+import time
+import logging
 import torch
+import psutil
+import os
+import pandas as pd
+import pynvml
+import datetime
 
-_TRAINER_STATS_AUTO_DISCOVERY_IGNORE=True
+logger = logging.getLogger(__name__)
+trainer_stats_name="timing_minimal"
 
-class TrainerStats(ABC):
-    """Abstract class used by trainers to accumulate statistics.
+def construct_trainer_stats(conf : config.Config, **kwargs) -> base.TrainerStats:
+    # Handle additional configurations here
+    # used the same code as the simple stats 
+    if "device" in kwargs:
+        device = kwargs["device"]
+    else:
+        logger.warning("No device provided to simple trainer stats. Using default PyTorch device")
+        device = torch.get_default_device()
+    return ResourceStats(device=device, conf=conf)
 
-    This abstract class defines the interface that statistics objects used by 
-    trainers must implement. Implementations that do not need specific methods 
-    should implement them using the `pass` keyword to make them no-ops.
-
+class ResourceStatsData():
     """
+    Class to store the data for each resource stat we wish to collect
+    - time taken for that step
+    """
+    def __init__(self, conf: config.Config):
+        self.conf = conf
+        self.times = utils.RunningTimer()
 
-    @abstractmethod
+    def start(self):
+        self.times.start()
+        
+    def stop(self):
+        self.times.stop()        
+
+    def print_stats(self):
+        print(f"Total time: {self.times.stat.history[0]/1e6} ms -- {self.times.stat.history[0]/1e9} sec")
+        
+
+class ResourceStats(base.TrainerStats):
+
+    def __init__(self, device: torch.device, conf: config.Config):
+        super().__init__()
+        self.device = device
+
+        # create the data storages
+        self.train_data = ResourceStatsData(conf)
+
+
     def start_train(self) -> None:
         """Start training.
 
         This method should be called by trainers when starting the training loop.
 
         """
-        pass
+        torch.cuda.synchronize(self.device)
+        self.train_data.start()
 
-    @abstractmethod
     def stop_train(self) -> None:
         """Stop training.
 
         This method should be called by trainers when the training is done.
 
         """
+        torch.cuda.synchronize(self.device)
+        self.train_data.stop()
+
+
+    def start_step(self):
+        pass
+        
+    def stop_step(self):
         pass
 
-    @abstractmethod
-    def start_step(self) -> None:
-        """Start a training step.
-        
-        This method should be called by trainers at the beginning of every 
-        training iteration.
-        
-        """
-        pass
-
-    @abstractmethod
-    def stop_step(self) -> None:
-        """Stop a training step.
-
-        This method should be called by trainers at the end of every training 
-        iteration.
-        
-        """
-        pass
-
-    @abstractmethod
     def start_forward(self) -> None:
         """Start the forward pass.
 
@@ -60,7 +86,6 @@ class TrainerStats(ABC):
         """
         pass
 
-    @abstractmethod
     def stop_forward(self) -> None:
         """Stop the forward pass.
 
@@ -69,15 +94,14 @@ class TrainerStats(ABC):
 
         """
         pass
+        
 
-    @abstractmethod
     def log_loss(self, loss: torch.Tensor) -> None:
         """Logs the loss of the current step by passing it to the stats.
 
         """
         pass
 
-    @abstractmethod
     def start_backward(self) -> None:
         """Start the backward pass.
 
@@ -86,8 +110,8 @@ class TrainerStats(ABC):
 
         """
         pass
+        
 
-    @abstractmethod
     def stop_backward(self) -> None:
         """Stop the backward pass
 
@@ -96,8 +120,8 @@ class TrainerStats(ABC):
 
         """
         pass
+        
 
-    @abstractmethod
     def start_optimizer_step(self) -> None:
         """Start the optimizer step.
 
@@ -107,7 +131,7 @@ class TrainerStats(ABC):
         """
         pass
 
-    @abstractmethod
+
     def stop_optimizer_step(self) -> None:
         """Stop the optimizer step.
 
@@ -117,7 +141,6 @@ class TrainerStats(ABC):
         """
         pass
 
-    @abstractmethod
     def start_save_checkpoint(self) -> None:
         """Start checkpointing.
 
@@ -127,7 +150,6 @@ class TrainerStats(ABC):
         """
         pass
 
-    @abstractmethod
     def stop_save_checkpoint(self) -> None:
         """Stop checkpointing.
 
@@ -137,7 +159,6 @@ class TrainerStats(ABC):
         """
         pass
 
-    @abstractmethod
     def log_step(self) -> None:
         """Logs information about the previous step.
 
@@ -147,14 +168,10 @@ class TrainerStats(ABC):
         """
         pass
 
-    @abstractmethod
-    def log_stats(self) -> None:
-        """Logs information about the data accumulated so far.
- 
-        This method should be called to log information about the data 
-        accumulated. Typically, this is likely to be called after `stop_train`, 
-        but implementations could want to leverage this differently.
+    def log_stats(self):
+        self.train_data.print_stats()
 
-        """
-        pass
+
+
+
 

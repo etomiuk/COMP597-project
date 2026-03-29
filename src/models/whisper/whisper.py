@@ -35,7 +35,7 @@ def pre_init_whisper(conf: config.Config, dataset: data.Dataset) -> Tuple[transf
     Returns:
         Tuple[transformers.PreTrainedModel, data.Dataset, transformers.PreTrainedTokenizer, transformers.DataCollatorForLanguageModeling]: The Whisper model, dataset, tokenizer and data collator.
     """
-    model = transformers.WhisperForAudioClassification.from_pretrained("openai/whisper-tiny") 
+    model = transformers.WhisperForAudioClassification.from_pretrained("openai/whisper-tiny", num_labels=conf.data_configs.whisper_data.num_labels) 
 
     return model, dataset
 
@@ -56,7 +56,7 @@ def simple_trainer(conf : config.Config, model : transformers.WhisperModel, data
     Returns:
         Tuple[trainer.Trainer, Optional[Dict]]: The simple trainer and a dictionary with additional options.
     """
-    loader = data.DataLoader(dataset, batch_size=conf.batch_size) # DataLoader for batching the dataset
+    loader = data.DataLoader(dataset, batch_size=conf.batch_size, num_workers=conf.data_configs.whisper_data.num_workers) # DataLoader for batching the dataset
     model = model.cuda() # Move the model to GPU
     optimizer = init_whisper_optim(conf, model) # Get the optimizer
     scheduler = transformers.get_scheduler( # Linear learning rate decay scheduler

@@ -67,6 +67,7 @@ class SimpleTrainer(base.Trainer):
         super_dict["lr_scheduler_state_dict"] = self.lr_scheduler.state_dict()
         return super_dict
     
+    
     def forward(self, i: int, batch: Any, model_kwargs: Dict[str, Any]) -> torch.Tensor:
         self.optimizer.zero_grad() #Zero the gradients
         outputs = self.model(**batch, **model_kwargs)

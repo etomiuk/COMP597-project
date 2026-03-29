@@ -2,7 +2,7 @@ import datasets
 import src.config as config
 import torch.utils.data 
 from transformers import WhisperProcessor
-
+import time
 data_load_name="whisper_data"
 
 # generate one random piece of data
@@ -27,8 +27,10 @@ class SyntheticDataWhisper(torch.utils.data.Dataset):
     def __init__(self, n, repeat, num_labels):
         self.n = n # number of unique samples
         self.repeat = repeat # number of times samples are repeated
-        whisper_extractor = WhisperProcessor.from_pretrained("openai/whisper-tiny") # converts audio to spectrogram data to be used in the model
-        self.data = [self.generate_random_sample(whisper_extractor, num_labels) for _ in range(n)] # generates the data
+        self.whisper_extractor = WhisperProcessor.from_pretrained("openai/whisper-tiny") # converts audio to spectrogram data to be used in the model
+        self.num_labels = num_labels
+        print("LAZY DATA")
+        #self.data = [self.generate_random_sample(whisper_extractor, num_labels) for _ in range(n)] # generates the data
 
     def generate_random_sample(self, extractor, num_labels):
         '''
@@ -37,11 +39,16 @@ class SyntheticDataWhisper(torch.utils.data.Dataset):
 
         gen() is a dict containing the data/label functions (in the case for audio)
         '''
-        return {"input_features": generate_random_audio(extractor),
+        #s = time.perf_counter_ns()
+        x  = {"input_features": generate_random_audio(extractor),
                 "labels": generate_random_label(num_labels)}
+        #e = time.perf_counter_ns()
+        #print(f"{(e-s)/1e6} ms")
+        return x
 
     def __getitem__(self, i):
-        return self.data[i % self.n]
+        torch.manual_seed(i) # to get the same data for the same index
+        return self.generate_random_sample(self.whisper_extractor, self.num_labels)
 
     def __len__(self):
         return self.n * self.repeat

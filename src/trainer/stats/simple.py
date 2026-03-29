@@ -55,6 +55,8 @@ class SimpleTrainerStats(base.TrainerStats):
     def __init__(self, device : torch.device) -> None:
         super().__init__()
         self.device = device
+
+        # create timer objects for all steps (without starting them)
         self.step_stats = utils.RunningTimer()
         self.forward_stats = utils.RunningTimer()
         self.backward_stats = utils.RunningTimer()

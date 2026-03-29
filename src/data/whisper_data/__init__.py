@@ -5,4 +5,5 @@ makes the translation between the config object and the datasets module, and it
 will hopefully make it easy to extend in the future if needs be.
 
 """
-from src.data.whisper_data.data import *
+from src.data.whisper_data.data_lazy import *
+#from src.data.whisper_data.data import *
