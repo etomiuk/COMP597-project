@@ -1,11 +1,8 @@
 import src.config as config
 import src.trainer.stats.base as base
-import src.trainer.stats.utils as utils
 import logging
 import torch
-import os
-import pandas as pd
-import datetime
+import src.trainer.stats.stats_data as stats
 
 logger = logging.getLogger(__name__)
 trainer_stats_name="timing_optim"
@@ -20,72 +17,14 @@ def construct_trainer_stats(conf : config.Config, **kwargs) -> base.TrainerStats
         device = torch.get_default_device()
     return ResourceStats(device=device, conf=conf)
 
-class ResourceStatsData():
-    """
-    Class to store the data for each resource stat we wish to collect
-    - time taken for that step
-    """
-    def __init__(self, conf: config.Config):
-        self.conf = conf
-        self.times = utils.RunningTimer()
-
-    def start(self):
-        self.times.start()
-        
-    def stop(self):
-        self.times.stop()
-
-
-    @staticmethod
-    def log(data_to_log):
-        """ Same as log_analysis in utils file, but did does not divide
-        The method is copied here because did not want to change the starter code
-        """
-        data = torch.tensor(data_to_log.history)
-        data = data.to(torch.float)
-        print(f"mean   : {data.mean() : .4f}")
-        print(f"q0.001 : {data.quantile(q=torch.tensor(0.001), interpolation='nearest') : .4f}")
-        print(f"q0.01  : {data.quantile(q=torch.tensor(0.010), interpolation='nearest') : .4f}")
-        print(f"q0.1   : {data.quantile(q=torch.tensor(0.100), interpolation='nearest') : .4f}")
-        print(f"q0.25  : {data.quantile(q=torch.tensor(0.250), interpolation='nearest') : .4f}")
-        print(f"q0.5   : {data.quantile(q=torch.tensor(0.500), interpolation='nearest') : .4f}")
-        print(f"q0.75  : {data.quantile(q=torch.tensor(0.750), interpolation='nearest') : .4f}")
-        print(f"q0.9   : {data.quantile(q=torch.tensor(0.900), interpolation='nearest') : .4f}")
-        print(f"q0.99  : {data.quantile(q=torch.tensor(0.990), interpolation='nearest') : .4f}")
-        print(f"q0.999 : {data.quantile(q=torch.tensor(0.999), interpolation='nearest') : .4f}")
-
-    def print_stats(self):
-        print("Time")
-        self.log(self.times.stat)
-
-    def to_csv(self, step):
-        df = pd.DataFrame({"iteration": list(range(1, len(self.times.stat.history)+1)),
-                            "time": self.times.stat.history,
-                            })
-
-        # build file name with params
-        time = datetime.datetime.now().strftime("%m-%d-%H-%M")
-        exp = "time"
-        params = {"batch": self.conf.batch_size,
-                  "work": self.conf.data_configs.whisper_data.num_workers,
-                  "samples": self.conf.data_configs.whisper_data.num_samples, 
-                  "repeat": self.conf.data_configs.whisper_data.repeat,
-                  "labels": self.conf.data_configs.whisper_data.num_labels}
-        full_filename = ""
-        for param in params:
-            full_filename += f"_{param}-{params[param]}"
-        full_filename = f"{time}_{exp}-{step}" + full_filename + ".csv"
-
-        df.to_csv(os.path.join(os.getcwd(), "final_data_analysis", "timing_data", full_filename), index=False)
-
 class ResourceStats(base.TrainerStats):
 
     def __init__(self, device: torch.device, conf: config.Config):
         super().__init__()
         self.device = device
 
-        # create the data storages
-        self.optim_data = ResourceStatsData(conf)
+        # data for optimizer stage
+        self.optim_data = stats.TimingStatsData(conf)
 
 
     def start_train(self) -> None:
@@ -205,7 +144,7 @@ class ResourceStats(base.TrainerStats):
         pass
 
     def log_stats(self):
-        self.optim_data.to_csv(step="optim")
+        self.optim_data.to_csv(exp="time", dir="timing_data", step="optim")
 
 
 

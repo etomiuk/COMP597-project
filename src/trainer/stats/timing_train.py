@@ -1,17 +1,11 @@
 import src.config as config
 import src.trainer.stats.base as base
-import src.trainer.stats.utils as utils
-import time
 import logging
 import torch
-import psutil
-import os
-import pandas as pd
-import pynvml
-import datetime
+import src.trainer.stats.stats_data as stats
 
 logger = logging.getLogger(__name__)
-trainer_stats_name="timing_minimal"
+trainer_stats_name="timing_train"
 
 def construct_trainer_stats(conf : config.Config, **kwargs) -> base.TrainerStats:
     # Handle additional configurations here
@@ -21,26 +15,7 @@ def construct_trainer_stats(conf : config.Config, **kwargs) -> base.TrainerStats
     else:
         logger.warning("No device provided to simple trainer stats. Using default PyTorch device")
         device = torch.get_default_device()
-    return ResourceStats(device=device, conf=conf)
-
-class ResourceStatsData():
-    """
-    Class to store the data for each resource stat we wish to collect
-    - time taken for that step
-    """
-    def __init__(self, conf: config.Config):
-        self.conf = conf
-        self.times = utils.RunningTimer()
-
-    def start(self):
-        self.times.start()
-        
-    def stop(self):
-        self.times.stop()        
-
-    def print_stats(self):
-        print(f"Total time: {self.times.stat.history[0]/1e6} ms -- {self.times.stat.history[0]/1e9} sec")
-        
+    return ResourceStats(device=device, conf=conf)        
 
 class ResourceStats(base.TrainerStats):
 
@@ -48,9 +23,8 @@ class ResourceStats(base.TrainerStats):
         super().__init__()
         self.device = device
 
-        # create the data storages
-        self.train_data = ResourceStatsData(conf)
-
+        # keep track of total training time
+        self.train_data = stats.TimingStatsData(conf)
 
     def start_train(self) -> None:
         """Start training.
@@ -169,7 +143,7 @@ class ResourceStats(base.TrainerStats):
         pass
 
     def log_stats(self):
-        self.train_data.print_stats()
+        self.train_data.to_csv(exp="time", dir="timing_data", step="train")
 
 
 
