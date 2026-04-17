@@ -79,6 +79,7 @@ class ResourceStatsData(StatsData):
     - time taken for that step
     - GPU utilization
     - CPU utilization
+    - GPU memory
     """
     def __init__(self, conf, GPU_handle, CPU_process, device):
         super().__init__(conf)
