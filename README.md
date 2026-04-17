@@ -43,11 +43,11 @@ Experiments are summarized in the following table, along with their value to the
 | CodeCarbon per step | `codecarbon_timed_step` | `final_data_analysis\energy_data` | Energy, power, and carbon emission measurements every two steps. |
 
 ## Data analysis
-Data analysis files for the experiments are described in the following table:
+Data analysis files for the experiments are described in the following table. They are all found under `final_data_analysis\analysis\`
 | Description | Analysis directory | Description |
 | -------- | ------- | ------- |
-| Per phase timing | `final_data_analysis\analysis\time_analysis.ipynb` | Plots for timing per phase and timing of sample generation |
-| Sample generation histogram | `final_data_analysis\analysis\sample_generation_analysis.ipynb` | Sample generation time historgram |
-| Overhead | `final_data_analysis\analysis\overhead_all_exp.ipynb` | Plots for overhead of each experiment |
-| Compute resources | `final_data_analysis\analysis\resource_analysis_step.ipynb` and `final_data_analysis\analysis\resource_analysis_per_phase.ipynb` | Plots for resource consumption. |
-| CodeCarbon | `final_data_analysis\analysis\energy_analysis_train.ipynb`, `final_data_analysis\analysis\energy_analysis_train_avg.ipynb`, and `final_data_analysis\analysis\energy_analysis_per_step.ipynb` | Plots for energy, power, and carbon for the whole training and per step. The `energy_analysis_train_avg` calculates the average over the whole training by taking the per step files and averaging them out. This was used to generate the GPU power plot specifically.|
+| Per phase timing | `time_analysis.ipynb` | Plots for timing per phase and timing of sample generation |
+| Sample generation histogram | `sample_generation_analysis.ipynb` | Sample generation time historgram |
+| Overhead | `overhead_all_exp.ipynb` | Plots for overhead of each experiment |
+| Compute resources | `resource_analysis_step.ipynb` and `resource_analysis_per_phase.ipynb` | Plots for resource consumption. |
+| CodeCarbon | `energy_analysis_train.ipynb`, `energy_analysis_train_avg.ipynb`, and `energy_analysis_per_step.ipynb` | Plots for energy, power, and carbon for the whole training and per step. The `energy_analysis_train_avg` calculates the average over the whole training by taking the per step files and averaging them out. This was used to generate the GPU power plot specifically.|
