@@ -1,42 +1,53 @@
-# COMP597 Starter Code
-This repository contains starter code for COMP597: Sustainability in Systems Design - Energy Efficiency analysis using CodeCarbon. 
+# COMP597 project
+This project measures the energy and compute resource consumption of OpenAI's Whisper model training. Details on the project, starter code, and initial setup instructions can be found [here](https://github.com/OMichaud0/COMP597-starter-code).
 
-The starter code provides the basics to train a machine learning model using PyTorch. More precisely, the provided code is a command line tool that is designed to be easily extended with new features. It provides the basics to add models, add command line arguments for configuration purposes, add data collection methods, or modify the training loop. 
+## Whisper model & dataset
+| Component    | Path | Description | 
+| -------- | ------- | ------- |
+| Model  | `src/config/data/whisper_data/config.py`    | `WhisperForAudioClassification` is used for this project and is trained using the provided `SimpleTrainer` |
+| Dataset | `src/data/whisper_data/data.py`     | Both dataset generation modes are included in this file. The mode is set using the command line argument `--data_configs.whisper_data.onfly` set to `y` for data generation on the fly and `n` for data generation before training. |
 
-The repository also provides you with the means to run the code both locally and on Slurm. The expectations are that the Slurm nodes managed by the schools will be used for the final experiments, but if you have a GPU with Cuda and wish to test your code locally, you will find everything you need to do so as well (assuming a Linux host).
+### Model parameters
+To train the Whisper model, use the following command line arguments with these values:
+| Parameter    | Argument | Value |
+| -------- | ------- | ------- |
+| Model | `--model` | `whisper` |
+| Dataset | `--data` | `whisper_data` | 
+| Experiment | `--trainer_stats` | See [Experiments](#experiments) section below |
 
-## Getting Started
+### Additional parameters
+Additional model configurations can be set using the following command line arguments:
 
-As mentioned above, the provided code is a command line tool. The entry point is the `launch.py` file, located at the root of this repository. Running the `python3 launch.py --help` (locally) or `srun.sh --help` (Slurm) will print a basic help message listing all the possible flags that can be used to configure the execution of a training loop. 
+| Parameter    | Argument |
+| -------- | ------- |
+| Number of labels | `--data_configs.whisper_data.num_labels` |
+| Number of unique training samples | `--data_configs.whisper_data.num_samples` |
+| Number of times to repeat each sample | `--data_configs.whisper_data.repeat` |
+| Number of workers | `--data_configs.whisper_data.num_workers` |
+| Data creation mode | `--data_configs.whisper_data.onfly` |
 
-Before digging straight into the code, visit the [documentation](docs/ToC.md). It provides details about the provided code, the required Python environment, how to use Slurm in the context of this project, and how to extend the code provided. 
+They are defined in `src/config/data/whisper_data/config.py`
 
-## Models
+## Experiments
+All data collection is handled in the classes defined in `src/trainer/stats/stats_data.py`. Different experiments create objects of these classes to collect the appropriate data.
 
-| Milabench Benchmark Name | Milabench Source Code | Model Name | Type | Architecture | Size | Documentation | Dataset | Pretrained Weights | Notes |
-| :--- | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| bert-tf32-fp16 | [`milabench/benchmarks/huggingface`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/huggingface) | BERT | NLP | Transformer | 116M | [HuggingFace Documentation](https://huggingface.co/docs/transformers/en/model_doc/bert) | [Synthetic Dataset from MilaBench](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/synth.py) | No pre-trained weights, Milabench uses the default HugginFace config. See how Milabench creates the model [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/models.py) | N/A |
-| N/A | [`milabench/benchmarks/huggingface`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/huggingface) | DistilBERT | NLP | Transformer | 67M | [HuggingFace Documentation](https://huggingface.co/docs/transformers/en/model_doc/distilbert) | [Synthetic Dataset from MilaBench](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/synth.py) | [HuggingFace Model Card](https://huggingface.co/distilbert/distilbert-base-uncased), See how Milabench loads the model [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/models.py) | N/A |
-| t5 | [`milabench/benchmarks/huggingface`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/huggingface) | T5 | NLP | Transformer | 220M | [HuggingFace Documentation](https://huggingface.co/docs/transformers/en/model_doc/t5) | [Synthetic Dataset from MilaBench](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/synth.py) | [HuggingFace T5 Base Model Card](https://huggingface.co/google-t5/t5-base), See how Milabench loads the model [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/models.py) | N/A |
-| N/A | [`milabench/benchmarks/huggingface`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/huggingface) | OPT | NLP | Transformer | 350M | [HuggingFace Documentation](https://huggingface.co/docs/transformers/en/model_doc/opt) | [Synthetic Dataset from MilaBench](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/synth.py) | [HuggingFace Opt-350M Model Card](https://huggingface.co/facebook/opt-350m), See how Milabench loads the model [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/models.py) | N/A |
-| N/A | [`milabench/benchmarks/torchvision`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/torchvision) | Resnet152 | CV | CNN | 60M | [Pytorch Model Documentation](https://docs.pytorch.org/vision/0.24/models/generated/torchvision.models.resnet152.html) | [FakeImageNet](https://huggingface.co/datasets/InfImagine/FakeImageDataset) | [TorchVison pretrained weights](https://docs.pytorch.org/vision/0.24/models/generated/torchvision.models.resnet152.html#torchvision.models.ResNet152_Weights) | N/A |
-| convnext_large-tf32-fp16 | [`milabench/benchmarks/torchvision`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/torchvision) | ConvNext Large | CV | CNN | 200M | [Pytorch Model Documentation](https://docs.pytorch.org/vision/0.24/models/generated/torchvision.models.convnext_large.html#convnext-large) | [FakeImageNet](https://huggingface.co/datasets/InfImagine/FakeImageDataset) | [TorchVision pretrained weights](https://docs.pytorch.org/vision/0.24/models/generated/torchvision.models.convnext_large.html#torchvision.models.ConvNeXt_Large_Weights) | N/A |
-| regnet_y_128gf | [`milabench/benchmarks/torchvision`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/torchvision) | RegNet Y 128GF | CV | CNN,RNN | 693M | [PyTorch Model Documentation](https://docs.pytorch.org/vision/main/models/generated/torchvision.models.regnet_y_128gf.html) | [FakeImageNet](https://huggingface.co/datasets/InfImagine/FakeImageDataset) | [TorchVision pretrained weight](https://docs.pytorch.org/vision/main/models/generated/torchvision.models.regnet_y_128gf.html#torchvision.models.RegNet_Y_128GF_Weights) | N/A | 
-| vjepa-single | [`milabench/benchmarks/vjepa`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/vjepa) | V-Jepa2 | CV | Transformer | 632M | [Source library](https://github.com/facebookresearch/jepa/tree/3081b0ad7b9651373ccef40c1d46b62f46cb7146) | [MilaBench FakeVideo Dataset Generation](https://github.com/mila-iqia/milabench/blob/master/benchmarks/vjepa/prepare.py) | No pre-trained weights, see how they load the model [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/vjepa/main.py) using the `init_video_model`. | It would be best to create a gitsubmodule to import the library they use under `src/models/vjepa2/`, or similar. |
-| pna | [`milabench/benchmarks/geo_gnn`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/geo_gnn) | PNA | Graphs | GNN | 4M | [Torch Geometric Documentation](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.models.PNA.html) | Milabench uses a subset of [PCQM4Mv2](https://pytorch-geometric.readthedocs.io/en/2.7.0/generated/torch_geometric.datasets.PCQM4Mv2.html), which they obtain with this [code](https://github.com/mila-iqia/milabench/blob/master/benchmarks/geo_gnn/pcqm4m_subset.py) | No pretrained weights, as Milabench trains a model from scratch using a subset of PCQM4Mv2. See the model configuration [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/geo_gnn/bench/models.py) | N/A |
-| recursiongfn | [`milabench/benchmarks/recursiongfn`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/recursiongfn) | GFlowNet | Graphs | GFlowNet, T. | 600M | [Paper introducing model](https://arxiv.org/abs/2106.04399), [library used by Milabench](https://github.com/Delaunay/gflownet/tree/milabench) | No dataset as it is a generative task. | Unfortunately, there is no documentation, but the weights are from [here](https://github.com/GFNOrg/gflownet/blob/master/mols/data/pretrained_proxy/best_params.pkl.gz) | It would be best to create a gitsubmodule to import the library they use under `src/models/gflownet/`, or similar.  |
-| whisper | [`milabench/benchmarks/huggingface`](https://github.com/mila-iqia/milabench/tree/master/benchmarks/huggingface) | Whisper | ASR | Transformer | 37.8M | [HuggingFace Documentation](https://huggingface.co/docs/transformers/en/model_doc/whisper) | [Synthetic Dataset from MilaBench](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/synth.py) | [HuggingFace Whisper Tiny Model Card](https://huggingface.co/openai/whisper-tiny), See how Milabench creates the model [here](https://github.com/mila-iqia/milabench/blob/master/benchmarks/huggingface/bench/models.py) | N/A |
+Experiments are summarized in the following table, along with their value to the `--trainer_stats` command line argument used to run those experiments. The value of the argument matches the code file that runs the experiment, all found in `src/trainer/stats/`. 
 
-### Datasets
+| Experiment | Value | Data directory | Description |
+| -------- | ------- | ------- | ------- |
+| End-to-end timing | `timing_train` | `final_data_analysis\timing_data\train` | Timing of the entire training loop |
+| CodeCarbon timing | `codecarbon_timed_train` | `final_data_analysis\overhead\train` | Timing of the entire training loop with one CodeCarbon measurement. CodeCarbon measurements are not saved. |
+| Per phase timing | `timing_*`, where `*` is one of `fwd`, `bkwd`, `optim`, `step` | `final_data_analysis\timing_data\*` | Timing of each phase separately. For `step`, time is measured per two steps to calculate estimates of batch creation for the on-the-fly data creation mode. |
+| Resource per step | `resource_usage_step` | `final_data_analysis\resource_data\step` | Measurements of CPU/GPU utilization and GPU memory every step. |
+| Resource per phase | `resource_usage_phase` | `final_data_analysis\resource_data\*`, where `*` is one of `forward`, `backward` | Measurements of CPU/GPU utilization and GPU memory every phase. |
+| CodeCarbon per step | `codecarbon_timed_step` | `final_data_analysis\energy_data` | Energy, power, and carbon emission measurements every two steps. |
 
-Some of the datasets you will be using are larger the storage provided for this course. The reality is that you do not need a full dataset to do energy measurements. A subset allowing for a few hundred or thousand iterations is sufficient to get meaningful results. Remember, we are not measuring the performance of the models, so there is no need to train for a certain accuracy or other metric. 
-
-If you decide to store your dataset on the shared partition (see the provided Slurm [documentation](docs/slurm.md)), **please reduce the size of the dataset to around 5GB (at most 10GB)**. For example, the dataset used in the provided GPT2 example, only contains one file of the C4 dataset. There are various ways to achieve this, and it is dependent on your dataset. Explore the options available! 
-
-## CodeCarbon Resources
-- [CodeCarbon Colab Tutorial](https://colab.research.google.com/drive/1eBLk-Fne8YCzuwVLiyLU8w0wNsrfh3xq)
-- [CodeCarbon documentation](https://mlco2.github.io/codecarbon/)
-
----
-
-
+## Data analysis
+Data analysis files for the experiments are described in the following table:
+| Description | Analysis directory | Description |
+| -------- | ------- | ------- |
+| Per phase timing | `final_data_analysis\analysis\time_analysis.ipynb` | Plots for timing per phase and timing of sample generation |
+| Sample generation histogram | `final_data_analysis\analysis\sample_generation_analysis.ipynb` | Sample generation time historgram |
+| Overhead | `final_data_analysis\analysis\overhead_all_exp.ipynb` | Plots for overhead of each experiment |
+| Compute resources | `final_data_analysis\analysis\resource_analysis_step.ipynb` and `final_data_analysis\analysis\resource_analysis_per_phase.ipynb` | Plots for resource consumption. |
+| CodeCarbon | `final_data_analysis\analysis\energy_analysis_train.ipynb`, `final_data_analysis\analysis\energy_analysis_train_avg.ipynb`, and `final_data_analysis\analysis\energy_analysis_per_step.ipynb` | Plots for energy, power, and carbon for the whole training and per step. The `energy_analysis_train_avg` calculates the average over the whole training by taking the per step files and averaging them out. This was used to generate the GPU power plot specifically.|
