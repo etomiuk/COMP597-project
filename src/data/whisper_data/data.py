@@ -1,4 +1,3 @@
-import datasets
 import src.config as config
 import torch.utils.data 
 from transformers import WhisperProcessor
@@ -24,25 +23,40 @@ class SyntheticDataWhisper(torch.utils.data.Dataset):
 
     The data attribute is a list of dicts, where the dicts contain an audio and a random label.
     '''
-    def __init__(self, n, repeat, num_labels):
-        self.n = n # number of unique samples
-        self.repeat = repeat # number of times samples are repeated
-        whisper_extractor = WhisperProcessor.from_pretrained("openai/whisper-tiny") # converts audio to spectrogram data to be used in the model
-        self.data = [self.generate_random_sample(whisper_extractor, num_labels) for _ in range(n)] # generates the data
+    def __init__(self, conf):
+        
+        # set params relating to nb of samples & labels
+        self.n = conf.data_configs.whisper_data.num_samples # number of unique samples
+        self.repeat = conf.data_configs.whisper_data.repeat # number of times samples are repeated
+        self.num_labels = conf.data_configs.whisper_data.num_labels
+
+        # preprocessor
+        self.whisper_extractor = WhisperProcessor.from_pretrained("openai/whisper-tiny") # converts audio to spectrogram data to be used in the model
+
+        # determine data loading mode
+        self.onfly = conf.data_configs.whisper_data.onfly
+        if self.onfly == 'y':
+            print("Data loading on the fly")
+        else:
+            print("Data loading before training")
+            self.data = [self.generate_random_sample(self.whisper_extractor, self.num_labels) for _ in range(self.n)] # generates the data
 
     def generate_random_sample(self, extractor, num_labels):
         '''
-        Returns a dictionary mapping sort of model names (or something similar)
-        to the function that generates the model data.clear
-
-        gen() is a dict containing the data/label functions (in the case for audio)
+        Generates a random audio with its random label
         '''
-        return {"input_features": generate_random_audio(extractor),
+        x  = {"input_features": generate_random_audio(extractor),
                 "labels": generate_random_label(num_labels)}
+        return x
 
     def __getitem__(self, i):
-        return self.data[i % self.n]
-
+        # if generating on the fly, we generate the sample here. Else, we retrive from list
+        if self.onfly == 'y':
+            torch.manual_seed(i) # to get the same data for the same index
+            return self.generate_random_sample(self.whisper_extractor, self.num_labels)
+        else:
+            return self.data[i % self.n]
+        
     def __len__(self):
         return self.n * self.repeat
 
@@ -51,11 +65,4 @@ class SyntheticDataWhisper(torch.utils.data.Dataset):
 def load_data(conf : config.Config) -> torch.utils.data.Dataset:
     """Simple function to load a dataset based on the provided config object.
     """
-    '''
-    train_files = None
-    if conf.data_configs.dataset.train_files is not None and conf.data_configs.dataset.train_files != "":
-        train_files = {"train": conf.data_configs.dataset.train_files}
-    return datasets.load_dataset(conf.data_configs.dataset.name, data_files=train_files, split=conf.data_configs.dataset.split, num_proc=conf.data_configs.dataset.load_num_proc)
-    '''
-    return SyntheticDataWhisper(n=conf.data_configs.whisper_data.num_samples, repeat=conf.data_configs.whisper_data.repeat, num_labels=conf.data_configs.whisper_data.num_labels)
-    #return SyntheticDataWhisper(n=conf.batch_size, repeat=conf.data_configs.whisper_data.num_samples, num_labels=conf.data_configs.whisper_data.num_labels)
+    return SyntheticDataWhisper(conf=conf)
